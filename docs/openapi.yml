@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Internal Transfers API
+  description: API for account creation, querying, and transactions in an internal transfers system.
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /accounts:
+    post:
+      summary: Create a new account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '204':
+          description: Account created successfully (no content)
+        '400':
+          description: Invalid request (e.g. malformed JSON or negative balance)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+  /accounts/{account_id}:
+    get:
+      summary: Retrieve an account by ID
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema:
+            type: integer
+          description: Account ID to retrieve
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid account ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientErrorResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+  /transactions:
+    post:
+      summary: Submit a transaction between two accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '204':
+          description: Transaction processed successfully (no content)
+        '400':
+          description: Invalid request or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+components:
+  schemas:
+    CreateAccountRequest:
+      type: object
+      required:
+        - account_id
+        - initial_balance
+      properties:
+        account_id:
+          type: integer
+          example: 123
+        initial_balance:
+          type: string
+          example: "100.23344"
+
+    SuccessResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "success"
+        data:
+          $ref: '#/components/schemas/AccountResponse'
+
+    AccountResponse:
+      type: object
+      properties:
+        account_id:
+          type: integer
+          example: 123
+        balance:
+          type: integer
+          example: 100.23344
+
+    TransactionRequest:
+      type: object
+      required:
+        - source_account_id
+        - destination_account_id
+        - amount
+      properties:
+        source_account_id:
+          type: integer
+          example: 123
+        destination_account_id:
+          type: integer
+          example: 456
+        amount:
+          type: string
+          example: "100.12345"
+
+    ServerErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        error:
+          type: string
+          example: "internal server error"
+
+    ClientErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        error:
+          type: string
+          example: "invalid request body"
